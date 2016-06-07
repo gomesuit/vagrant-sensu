@@ -1,21 +1,22 @@
 #!/bin/sh
 
+yum install -y epel-release
 yum install -y rabbitmq-server
 
 systemctl start rabbitmq-server
 
-cat <<EOF > /etc/rabbitmq/rabbitmq.config
-[
-    {rabbit, [
-    {ssl_listeners, [5671]},
-    {ssl_options, [{cacertfile,"/etc/rabbitmq/ssl/cacert.pem"},
-                   {certfile,"/etc/rabbitmq/ssl/cert.pem"},
-                   {keyfile,"/etc/rabbitmq/ssl/key.pem"},
-                   {verify,verify_peer},
-                   {fail_if_no_peer_cert,true}]}
-  ]}
-].
-EOF
+#cat <<EOF > /etc/rabbitmq/rabbitmq.config
+#[
+#    {rabbit, [
+#    {ssl_listeners, [5671]},
+#    {ssl_options, [{cacertfile,"/etc/rabbitmq/ssl/cacert.pem"},
+#                   {certfile,"/etc/rabbitmq/ssl/cert.pem"},
+#                   {keyfile,"/etc/rabbitmq/ssl/key.pem"},
+#                   {verify,verify_peer},
+#                   {fail_if_no_peer_cert,true}]}
+#  ]}
+#].
+#EOF
 
 systemctl restart rabbitmq-server.service
 
@@ -35,7 +36,7 @@ systemctl start redis
 cat <<EOF > /etc/yum.repos.d/sensu.repo
 [sensu]
 name=sensu-main
-baseurl=http://repos.sensuapp.org/yum/el/$releasever/$basearch/
+baseurl=http://repos.sensuapp.org/yum/el/\$releasever/\$basearch/
 gpgcheck=0
 enabled=1
 EOF
@@ -45,12 +46,8 @@ yum install -y sensu
 cat <<EOF > /etc/sensu/conf.d/rabbitmq.json
 {
   "rabbitmq": {
-    "ssl": {
-      "cert_chain_file": "/etc/sensu/ssl/cert.pem",
-      "private_key_file": "/etc/sensu/ssl/key.pem"
-    },
     "host": "localhost",
-    "port": 5671,
+    "port": 5672,
     "vhost": "/sensu",
     "user": "sensu",
     "password": "rabbitmq-sensu-password"
@@ -94,6 +91,28 @@ EOF
 
 yum install -y uchiwa
 
-vi /etc/sensu/uchiwa.json
+cat <<EOF > /etc/sensu/uchiwa.json
+{
+    "sensu": [
+        {
+            "name": "Sensu",
+            "host": "127.0.0.1",
+            "ssl": false,
+            "port": 4567,
+            "user": "admin",
+            "pass": "sensu-api-admin-password",
+            "path": "",
+            "timeout": 5000
+        }
+    ],
+    "uchiwa": {
+        "user": "",
+        "pass": "",
+        "port": 3000,
+        "stats": 10,
+        "refresh": 10000
+    }
+}
+EOF
 
 /etc/init.d/uchiwa start

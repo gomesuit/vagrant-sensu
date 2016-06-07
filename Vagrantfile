@@ -22,11 +22,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define :client01 do |host|
     HOSTNAME = "client01"
     PRIVATE_IP_ADDRESS = "192.168.33.20"
+    ARGS = HOSTNAME + " " + PRIVATE_IP_ADDRESS
 
     host.vm.hostname = HOSTNAME
     host.vm.network "private_network", ip: PRIVATE_IP_ADDRESS
     host.vm.provision :shell, path: "stop-firewall.sh"
     host.vm.provision :shell, path: "set-hosts.sh"
+    host.vm.provision :shell, path: "install-sensu-client.sh", args: ARGS
   end
 
 end
